@@ -10,7 +10,7 @@ on:
         required: true
         type: string
     secrets:
-      registry:
+      gke_registry:
         required: true
       identity_provider:
         required: true
@@ -18,45 +18,42 @@ on:
         required: true
       cluster:
         required: true
-      
+
 jobs:
-    configure_and_deploy:
-      timeout-minutes: 40
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v3
-        - name: 'Install CD tool: skaffold'
-          run: |
-            curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
-            sudo install skaffold /usr/local/bin/
-        - name: 'Install CD tool: kustomize'
-          run: |
-            curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
-            sudo install skaffold /usr/local/bin/
-        - name: 'Authenticate to Google Cloud'
-          uses: 'google-github-actions/auth@v1'
-          with:
-            create_credentials_file: true
-            workload_identity_provider: ${{secrets.identity_provider}}
-            service_account: ${{secrets.service_user}}
-        - name: 'Configure Docker Client'
-          run: |-
-            gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-        - name: 'Build and publish docker image'
-          if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
-          run: |
-            docker build -t ${{secrets.registry}}/${{inputs.image_name}} .
-            docker image push ${{secrets.registry}}/${{inputs.image_name}}
-        - name: 'Get GKE credentials'
-          uses: google-github-actions/get-gke-credentials@v1.0.1
-          with:
-            cluster_name: ${{secrets.cluster}}
-            location: us-central1-a
-        - name: 'Deploy to Cluster'
-          run: |
-            skaffold run
-            kubectl rollout status deployment/${{inputs.deployment_name}} -n blueprint-studio-gke
-            kubectl get services -o wide -n blueprint-studio-gke
-        
-
-
+  configure_and_deploy:
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Install CD tool: skaffold'
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
+      - name: 'Install CD tool: kustomize'
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          create_credentials_file: true
+          workload_identity_provider: ${{secrets.identity_provider}}
+          service_account: ${{secrets.service_user}}
+      - name: 'Configure Docker Client'
+        run: |-
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+      - name: 'Build and publish docker image'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+        run: |
+          docker build -t ${{secrets.gke_registry}}/${{inputs.image_name}} .
+          docker image push ${{secrets.gke_registry}}/${{inputs.image_name}}
+      - name: 'Get GKE credentials'
+        uses: google-github-actions/get-gke-credentials@v1.0.1
+        with:
+          cluster_name: ${{secrets.cluster}}
+          location: us-central1-a
+      - name: 'Deploy to Cluster'
+        run: |
+          skaffold run
+          kubectl rollout status deployment/${{inputs.deployment_name}} -n blueprint-studio-gke
+          kubectl get services -o wide -n blueprint-studio-gke
