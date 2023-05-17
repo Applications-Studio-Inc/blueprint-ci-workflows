@@ -10,6 +10,8 @@ on:
         required: true
         type: string
     secrets:
+      registry:
+        required: true
       identity_provider:
         required: true
       service_user:
@@ -46,8 +48,8 @@ jobs:
         - name: 'Build and publish docker image'
           if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
           run: |
-            docker build -t ${{inputs.image_name}} .
-            docker image push ${{inputs.image_name}}
+            docker build -t ${{secrets.registry}}/${{inputs.image_name}} .
+            docker image push ${{secrets.registry}}/${{inputs.image_name}}
         - name: 'Get GKE credentials'
           uses: google-github-actions/get-gke-credentials@v1.0.1
           with:
