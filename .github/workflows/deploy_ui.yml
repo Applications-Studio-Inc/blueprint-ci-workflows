@@ -47,7 +47,7 @@ jobs:
         run: |
           docker build -t ${{secrets.gke_registry}}/${{inputs.image_name}} .
           docker image push ${{secrets.gke_registry}}/${{inputs.image_name}}
-          kustomize edit set image ${{secrets.gke_registry}}/${{inputs.image_name}}
+          cd overlays/dev && kustomize edit set image ${{secrets.gke_registry}}/${{inputs.image_name}}
       - name: 'Get GKE credentials'
         uses: google-github-actions/get-gke-credentials@v1.0.1
         with:
