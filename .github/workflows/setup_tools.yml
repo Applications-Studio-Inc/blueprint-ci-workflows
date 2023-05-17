@@ -1,6 +1,12 @@
 name: Setup Deployment Tools
 
 on:
+  push:
+    branches:
+      - none
+  pull_request:
+    branches: 
+      - none
   workflow_call:
 
 jobs:
