@@ -10,8 +10,13 @@ on:
         required: true
         type: string
       hasNpmPackages:
-        required: true
+        required: false
         type: boolean
+        default: false
+      runTests:
+        required: false
+        type: boolean
+        default: true
     secrets:
       gke_registry:
         required: true
@@ -45,6 +50,14 @@ jobs:
       - name: 'Install node.js packages'
         if: inputs.hasNpmPackages == true
         run: npm install
+      - name: Run backend test
+        if: inputs.runTests == true
+        run: |
+          chmod +x gradlew
+          npm run ci:backend:test
+      - name: Run frontend test
+        if: inputs.runTests == true
+        run: npm run ci:frontend:test
       - name: 'Install CD tool: skaffold'
         run: |
           curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
