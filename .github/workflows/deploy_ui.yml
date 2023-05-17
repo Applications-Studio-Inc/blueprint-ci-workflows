@@ -21,9 +21,6 @@ on:
       
 jobs:
     configure_and_deploy:
-      permissions:
-        id-token: write
-        contents: read
       timeout-minutes: 40
       runs-on: ubuntu-latest
       steps:
@@ -53,7 +50,7 @@ jobs:
         - name: 'Get GKE credentials'
           uses: google-github-actions/get-gke-credentials@v1.0.1
           with:
-            cluster_name: ${{secrets.cluester}}
+            cluster_name: ${{secrets.cluster}}
             location: us-central1-a
         - name: 'Deploy to Cluster'
           run: |
