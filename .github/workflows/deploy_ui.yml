@@ -6,6 +6,9 @@ on:
       image_name:
         required: true
         type: string
+      image_tag:
+        required: true
+        type: string
       deployment_name:
         required: true
         type: string
@@ -45,9 +48,15 @@ jobs:
       - name: 'Build and publish docker image'
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
         run: |
-          docker build -t ${{secrets.gke_registry}}/${{inputs.image_name}} .
-          docker image push ${{secrets.gke_registry}}/${{inputs.image_name}}
-          cd overlays/dev && kustomize edit set image ${{secrets.gke_registry}}/${{inputs.image_name}}
+          new_image="${{secrets.gke_registry}}/${{inputs.image_name}}:${{inputs.image_tag}}"
+          docker build -t $new_image .
+          docker image push $new_image
+          cd overlays/dev && kustomize edit set image $new_image
+      - name: 'Update image tag for manual run'
+        if: github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+        run: |
+          latest_image=$(gcloud artifacts docker images list ${{secrets.gke_registry}}/${{inputs.image_name}} --sort-by="~UPDATE_TIME" --limit=1 --format="value(format("{0}@{1}",package,version))")
+          cd overlays/dev && kustomize edit set image $latest_image
       - name: 'Get GKE credentials'
         uses: google-github-actions/get-gke-credentials@v1.0.1
         with:
