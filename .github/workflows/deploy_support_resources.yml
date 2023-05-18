@@ -1,0 +1,37 @@
+name: Deploy Support Resource
+
+on:
+  workflow_call:
+    secrets:
+      gke_registry:
+        required: true
+      identity_provider:
+        required: true
+      service_user:
+        required: true
+      cluster:
+        required: true
+
+jobs:
+  configure_and_deploy:
+    timeout-minutes: 40
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: 'Install CD tool: skaffold'
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
+      - name: 'Install CD tool: kustomize'
+        run: |
+          curl -Lo skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && \
+          sudo install skaffold /usr/local/bin/
+      - name: 'Get GKE credentials'
+        uses: google-github-actions/get-gke-credentials@v1.0.1
+        with:
+          cluster_name: ${{secrets.cluster}}
+          location: us-central1-a
+      - name: 'Deploy to Cluster'
+        run: |
+          skaffold run
+          kubectl get services -o wide -n blueprint-studio-gke
