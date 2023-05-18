@@ -9,11 +9,11 @@ on:
       deployment_name:
         required: true
         type: string
-      hasNpmPackages:
+      npm_packages:
         required: false
         type: boolean
         default: false
-      runTests:
+      run_tests:
         required: false
         type: boolean
         default: true
@@ -40,23 +40,23 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-        if: inputs.hasNpmPackages == true
+        if: inputs.npm_packages == true
         with:
-          node-version: 16.17.0
+          node-version: ${{env.NODE_VERSION}}
       - uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: 11
       - name: 'Install node.js packages'
-        if: inputs.hasNpmPackages == true
+        if: inputs.npm_packages == true
         run: npm install
       - name: Run backend test
-        if: inputs.runTests == true
+        if: inputs.run_tests == true
         run: |
           chmod +x gradlew
           npm run ci:backend:test
       - name: Run frontend test
-        if: inputs.runTests == true
+        if: inputs.run_tests == true
         run: npm run ci:frontend:test
       - name: 'Install CD tool: skaffold'
         run: |
